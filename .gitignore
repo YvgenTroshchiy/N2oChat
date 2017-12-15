@@ -1,0 +1,35 @@
+# Max OS
+.DS_Store
+
+# generated files
+bin/
+gen/
+
+libs/
+
+# Android Studio
+.idea/
+.gradle
+/*/local.properties
+/*/out
+/*/*/build
+/*/build
+/build
+/captures
+/*/*/debug
+/*/*/production
+*.iml
+*.iws
+*.ipr
+*~
+*.swp
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# proguard
+dump.txt
+ajcore*
+
+# Log Files
+*.log
