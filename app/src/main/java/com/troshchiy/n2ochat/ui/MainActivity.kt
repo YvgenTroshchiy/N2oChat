@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
     private var token: ByteArray? = null
     private val bufferSize = 1024 * 8 //8kb default size
+    //TODO: Generate UUID
     private val clientId = "emqttd_30gph465el7ja8oawvi"
     private val topic = "room/global"
 
@@ -65,6 +66,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             mqttAndroidClient.subscribe(arrayOf(topic, "actions/1/index/$clientId/"), intArrayOf(1, 1), null, object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken) {
                     info { "subscribeToTopic. onSuccess" }
+                    getHistory()
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
@@ -89,8 +91,24 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         }
 
         if (decodedPayload is BertTuple) {
-            val message = decodedPayload[1]
-            if (message is ByteArray) tv_message.text = String(message)
+            val firstElement = decodedPayload[0]
+            if (firstElement is BertAtom) {
+                when (firstElement.get()) {
+                    "History" -> {
+                        val historyData: ArrayList<BertTuple> = decodedPayload[4] as ArrayList<BertTuple>
+
+                        for (message in historyData) {
+                            val message = String(message[14] as ByteArray)
+                            warn { message }
+                        }
+
+                    }
+                    "Message" -> {
+                        val message = decodedPayload[14]
+                        if (message is ByteArray) tv_message.text = String(message)
+                    }
+                }
+            }
         }
     }
 
@@ -103,8 +121,6 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
                     mqttAndroidClient.setBufferOpts(getDisconnectedBufferOptions())
 
                     subscribeToTopic(topic)
-
-                    publishMessage()
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
@@ -128,6 +144,33 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         bufferSize = 100
         isPersistBuffer = false
         isDeleteOldestMessages = false
+    }
+
+    private fun getHistory() {
+        //TODO: Check is connected
+        info { "getHistory" }
+
+        val bertTupleLoad = BertTuple().apply {
+            add(BertAtom("load"))
+            add("")
+        }
+
+        val load = MqttMessage().apply {
+            payload = BertEncoder.setupEncoder()
+                    .withBufferSize(bufferSize)
+                    .withEncodeStringAsBinary(true)
+                    ?.encodeAny(bertTupleLoad)
+
+            qos = 1
+        }
+
+        try {
+            //TODO: Show progress
+            //TODO: Create endpoint constant
+            mqttAndroidClient.publish("events/1/3/index/anon/$clientId/", load)
+        } catch (e: Exception) {
+            error("getHistory", e)
+        }
     }
 
     private fun publishMessage() {
