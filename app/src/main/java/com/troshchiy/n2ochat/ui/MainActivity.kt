@@ -31,6 +31,8 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
         mqttAndroidClient = getMqttAndroidClient(topic)
         connectToMqttAndroidClient(topic)
+
+        btn_send.setOnClickListener { publishMessage() }
     }
 
     private fun getMqttAndroidClient(topic: String) = MqttAndroidClient(applicationContext, "tcp://ns.synrc.com:1883", clientId).apply {
@@ -129,13 +131,14 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun publishMessage() {
+        //TODO: Check is connected
         info { "publishMessage" }
 
         startTime = System.currentTimeMillis()
 
         val bertTuple = BertTuple().apply {
             add(BertAtom("message"))
-            add("Hi There!")
+            add(edt_message.text.toString())
         }
 
         val message = MqttMessage().apply {
@@ -148,7 +151,9 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         }
 
         try {
+            //TODO: Show progress
             mqttAndroidClient.publish("events/1/3/index/anon/$clientId/", message)
+            edt_message.setText("")
         } catch (e: Exception) {
             error("publishMessage", e)
         }
