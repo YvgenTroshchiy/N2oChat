@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         mqttAndroidClient = getMqttAndroidClient(topic)
         connectToMqttAndroidClient(topic)
 
-        btn_send.setOnClickListener { publishMessage() }
+        btnSend.setOnClickListener { publishMessage() }
     }
 
     private fun getMqttAndroidClient(topic: String) = MqttAndroidClient(applicationContext, "tcp://ns.synrc.com:1883", clientId).apply {
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             override fun deliveryComplete(token: IMqttDeliveryToken) {
                 info { "deliveryComplete. token: ${token.message.payload}" }
                 this@MainActivity.token = token.message.payload
-                tv_latency.text = this@MainActivity.string(R.string.latency, (System.currentTimeMillis() - startTime).toString())
+                tvLatency.text = this@MainActivity.string(R.string.latency, (System.currentTimeMillis() - startTime).toString())
             }
         })
     }
@@ -82,13 +82,14 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     private fun messageArrived(mqttMessage: MqttMessage) {
         info { "messageArrived. payload: ${mqttMessage.payload}" }
 
-        var decodedPayload: Any? = null
-        try {
-            decodedPayload = BertDecoder.setupDecoder().decodeAny(mqttMessage.payload)
-            debug { "messageArrived\n\ndecodedPayload: $decodedPayload" }
+        val decodedPayload: Any? = try {
+            BertDecoder.setupDecoder().decodeAny(mqttMessage.payload)
         } catch (e: InvalidObjectException) {
             error("decoded message payload", e)
+            null
         }
+
+        debug { "messageArrived. decodedPayload: $decodedPayload" }
 
         if (decodedPayload is BertTuple) {
             val firstElement = decodedPayload[0]
@@ -105,7 +106,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
                     }
                     "Message" -> {
                         val message = decodedPayload[14]
-                        if (message is ByteArray) tv_message.text = String(message)
+                        if (message is ByteArray) tvMessage.text = String(message)
                     }
                 }
             }
@@ -179,24 +180,25 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
         startTime = System.currentTimeMillis()
 
-        val bertTuple = BertTuple().apply {
-            add(BertAtom("message"))
-            add(edt_message.text.toString())
-        }
-
         val message = MqttMessage().apply {
+            val bertTuple = BertTuple().apply {
+                add(BertAtom("message"))
+                add(edtMessage.text.toString())
+            }
+
             payload = BertEncoder.setupEncoder()
                     .withBufferSize(bufferSize)
                     .withEncodeStringAsBinary(true)
                     ?.encodeAny(bertTuple)
 
+            // Quality of Service 1 - indicates that a message should be delivered at least once (one or more times).
             qos = 1
         }
 
         try {
             //TODO: Show progress
             mqttAndroidClient.publish("events/1/3/index/anon/$clientId/", message)
-            edt_message.setText("")
+            edtMessage.setText("")
         } catch (e: Exception) {
             error("publishMessage", e)
         }
