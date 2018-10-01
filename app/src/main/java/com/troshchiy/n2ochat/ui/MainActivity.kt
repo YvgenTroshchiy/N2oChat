@@ -13,7 +13,10 @@ import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import org.jetbrains.anko.*
 import java.io.InvalidObjectException
+import java.util.*
 
+
+//TODO: Split this class to avoid god object. Extract to the manager/domain
 class MainActivity : AppCompatActivity(), AnkoLogger {
 
     private lateinit var mqttAndroidClient: MqttAndroidClient
@@ -21,9 +24,13 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
     private var token: ByteArray? = null
     private val bufferSize = 1024 * 8 //8kb default size
-    //TODO: Generate UUID
+
+    // TODO: Replace with the [private val clientId = UUID.randomUUID().toString()]
     private val clientId = "emqttd_30gph465el7ja8oawvi"
     private val topic = "room/global"
+
+    private val history = "History"
+    private val message = "Message"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,7 +102,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             val firstElement = decodedPayload[0]
             if (firstElement is BertAtom) {
                 when (firstElement.get()) {
-                    "History" -> {
+                    history -> {
                         val historyData: ArrayList<BertTuple> = decodedPayload[4] as ArrayList<BertTuple>
 
                         for (message in historyData) {
@@ -104,7 +111,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
                         }
 
                     }
-                    "Message" -> {
+                    message -> {
                         val message = decodedPayload[14]
                         if (message is ByteArray) tvMessage.text = String(message)
                     }
@@ -158,9 +165,9 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
         val load = MqttMessage().apply {
             payload = BertEncoder.setupEncoder()
-                    .withBufferSize(bufferSize)
-                    .withEncodeStringAsBinary(true)
-                    ?.encodeAny(bertTupleLoad)
+                .withBufferSize(bufferSize)
+                .withEncodeStringAsBinary(true)
+                ?.encodeAny(bertTupleLoad)
 
             qos = 1
         }
@@ -187,9 +194,9 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             }
 
             payload = BertEncoder.setupEncoder()
-                    .withBufferSize(bufferSize)
-                    .withEncodeStringAsBinary(true)
-                    ?.encodeAny(bertTuple)
+                .withBufferSize(bufferSize)
+                .withEncodeStringAsBinary(true)
+                ?.encodeAny(bertTuple)
 
             // Quality of Service 1 - indicates that a message should be delivered at least once (one or more times).
             qos = 1
