@@ -1,7 +1,7 @@
 package com.troshchiy.n2ochat.ui
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.softwarejoint.bert.BertAtom
 import com.softwarejoint.bert.BertDecoder
 import com.softwarejoint.bert.BertEncoder

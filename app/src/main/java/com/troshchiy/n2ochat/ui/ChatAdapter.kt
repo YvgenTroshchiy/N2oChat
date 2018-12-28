@@ -1,7 +1,7 @@
 package com.troshchiy.n2ochat.ui
 
-import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.troshchiy.n2ochat.Message
 import com.troshchiy.n2ochat.databinding.ListItemMessageBinding
 import com.troshchiy.n2ochat.inflater
@@ -22,7 +22,7 @@ class ChatAdapter() : RecyclerView.Adapter<ChatAdapter.BindingHolder>() {
     override fun getItemCount(): Int = data.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-            BindingHolder(ListItemMessageBinding.inflate(parent.context.inflater(), parent, false))
+        BindingHolder(ListItemMessageBinding.inflate(parent.context.inflater(), parent, false))
 
     override fun onBindViewHolder(holder: BindingHolder, position: Int) {
         holder.bind(data[position])
